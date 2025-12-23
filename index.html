@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Merry Christmas</title>
+
 <style>
 html,body{
   margin:0;
@@ -29,11 +30,9 @@ html,body{
   position:fixed;
   inset:0;
   display:flex;
-  flex-direction:column;
   justify-content:center;
   align-items:center;
   color:#fff;
-  text-align:center;
   pointer-events:none;
   opacity:0;
   transition:opacity 2s ease;
@@ -42,29 +41,23 @@ html,body{
 
 #message h1{
   font-size:clamp(28px,6vw,56px);
-  margin:0;
   letter-spacing:2px;
 }
 
-#message p{
-  margin-top:12px;
-  font-size:clamp(16px,3vw,22px);
-  opacity:0.85;
-}
-
 canvas{
-  display:block;
   position:relative;
   z-index:2;
+  display:block;
 }
 </style>
 </head>
+
 <body>
 
 <div id="memory"></div>
 
 <div id="message">
-  <h1>Merry Christmas, Bangbon❤️</h1>
+  <h1>Merry Christmas, Bangbon ❤️</h1>
 </div>
 
 <canvas id="c"></canvas>
@@ -114,7 +107,7 @@ class Particle{
   update(){
     if(!this.locked){
       this.radius += (this.radiusTarget-this.radius)*0.015;
-      this.angle += 0.025;
+      this.angle += 0.02;
       this.y += (this.yTarget-this.y)*0.02;
 
       if(Math.abs(this.radius-this.radiusTarget)<1.2 &&
@@ -167,18 +160,56 @@ class Snow{
   }
 }
 
+/* ================= GIFTS ================= */
+class Gift{
+  constructor(){
+    this.w = Math.random()*36+24;
+    this.h = this.w*0.75;
+    this.x = TREE_X + (Math.random()-0.5)*TREE_W*0.9;
+    this.y = TREE_Y - this.h/2 - Math.random()*20;
+    this.rot = Math.random()*0.6 - 0.3;
+    this.c1 = `hsl(${Math.random()*360},80%,60%)`;
+    this.c2 = "#fff";
+    this.a = 0;
+  }
+
+  update(){
+    this.a = Math.min(this.a+0.02,1);
+  }
+
+  draw(){
+    ctx.save();
+    ctx.translate(this.x,this.y);
+    ctx.rotate(this.rot); // KHÔNG bị ngược
+    ctx.globalAlpha=this.a;
+
+    ctx.fillStyle=this.c1;
+    ctx.fillRect(-this.w/2,-this.h/2,this.w,this.h);
+
+    ctx.fillStyle=this.c2;
+    ctx.fillRect(-3,-this.h/2,6,this.h);
+    ctx.fillRect(-this.w/2,-3,this.w,6);
+
+    ctx.restore();
+    ctx.globalAlpha=1;
+  }
+}
+
 /* ================= CREATE ================= */
 const particles=[];
-for(let i=0;i<2000;i++) particles.push(new Particle());
+for(let i=0;i<2200;i++) particles.push(new Particle());
 
 const snow=[];
-for(let i=0;i<120;i++) snow.push(new Snow());
+for(let i=0;i<140;i++) snow.push(new Snow());
+
+const gifts=[];
+for(let i=0;i<28;i++) gifts.push(new Gift());
 
 /* ================= STAR ================= */
 function drawStar(){
   ctx.save();
   ctx.translate(TREE_X,TREE_Y-TREE_H-18);
-  ctx.rotate(treeRotation*1.2);
+  ctx.rotate(treeRotation);
   ctx.fillStyle="#ffd700";
   ctx.shadowBlur=40;
   ctx.shadowColor="#ffd700";
@@ -205,11 +236,15 @@ function animate(){
   drawStar();
   snow.forEach(s=>{s.update();s.draw()});
 
-  // reveal text + image when tree done
   if(!revealed && particles.every(p=>p.locked)){
     revealed=true;
     document.getElementById("memory").style.opacity=1;
     document.getElementById("message").style.opacity=1;
+  }
+
+  // 🎁 GIFTS chỉ xuất hiện SAU khi cây hoàn thành
+  if(revealed){
+    gifts.forEach(g=>{g.update();g.draw()});
   }
 
   requestAnimationFrame(animate);
