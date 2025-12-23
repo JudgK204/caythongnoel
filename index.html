@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merry Christmas</title>
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  background:#000;
+  overflow:hidden;
+  font-family: system-ui, sans-serif;
+}
+
+/* ===== IMAGE BACK ===== */
+#memory{
+  position:fixed;
+  inset:0;
+  background:url("https://i.pinimg.com/736x/27/47/64/2747648b23e122331d8372bb15f357b2.jpg") center/cover no-repeat;
+  opacity:0;
+  filter: blur(6px) brightness(0.6);
+  transition: opacity 2.5s ease;
+  z-index:0;
+}
+
+/* ===== TEXT ===== */
+#message{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 2s ease;
+  z-index:3;
+}
+
+#message h1{
+  font-size:clamp(28px,6vw,56px);
+  margin:0;
+  letter-spacing:2px;
+}
+
+#message p{
+  margin-top:12px;
+  font-size:clamp(16px,3vw,22px);
+  opacity:0.85;
+}
+
+canvas{
+  display:block;
+  position:relative;
+  z-index:2;
+}
+</style>
+</head>
+<body>
+
+<div id="memory"></div>
+
+<div id="message">
+  <h1>Merry Christmas, Bangbon❤️</h1>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+/* ================= BASIC ================= */
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+const W = () => canvas.width;
+const H = () => canvas.height;
+
+/* ================= TREE ================= */
+const TREE_H = H()*0.65;
+const TREE_W = TREE_H*0.6;
+const TREE_X = W()/2;
+const TREE_Y = H()*0.88;
+
+const COLORS = ["#ffd27d","#ffcc33","#ffb347","#ffe066"];
+let treeRotation = 0;
+
+/* ================= PARTICLE ================= */
+class Particle{
+  constructor(){
+    this.t = Math.random();
+    this.radiusTarget = (TREE_W/2)*this.t;
+    this.yTarget = (TREE_Y-TREE_H)+this.t*TREE_H;
+    this.angleOffset = Math.random()*Math.PI*2;
+
+    this.radius = Math.max(W(),H())*0.9 + Math.random()*300;
+    this.angle = Math.random()*Math.PI*2;
+    this.y = H()+Math.random()*400;
+
+    this.locked=false;
+    this.a=0;
+    this.r=Math.random()*1.8+0.6;
+    this.c=COLORS[Math.random()*COLORS.length|0];
+  }
+
+  update(){
+    if(!this.locked){
+      this.radius += (this.radiusTarget-this.radius)*0.015;
+      this.angle += 0.025;
+      this.y += (this.yTarget-this.y)*0.02;
+
+      if(Math.abs(this.radius-this.radiusTarget)<1.2 &&
+         Math.abs(this.y-this.yTarget)<1.2){
+        this.locked=true;
+      }
+    }
+    this.a=Math.min(this.a+0.02,1);
+  }
+
+  draw(){
+    const ang=this.angle+this.angleOffset+treeRotation;
+    const x=TREE_X+Math.cos(ang)*this.radius;
+    const y=this.locked?this.yTarget:this.y;
+
+    ctx.globalAlpha=this.a;
+    ctx.fillStyle=this.c;
+    ctx.shadowBlur=22;
+    ctx.shadowColor=this.c;
+    ctx.beginPath();
+    ctx.arc(x,y,this.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+/* ================= SNOW ================= */
+class Snow{
+  constructor(){this.reset()}
+  reset(){
+    this.x=Math.random()*W();
+    this.y=Math.random()*-H();
+    this.r=Math.random()*2+0.6;
+    this.vy=Math.random()*0.8+0.4;
+    this.vx=Math.random()*0.3-0.15;
+    this.a=Math.random()*0.6+0.2;
+  }
+  update(){
+    this.y+=this.vy;
+    this.x+=this.vx;
+    if(this.y>H()) this.reset();
+  }
+  draw(){
+    ctx.globalAlpha=this.a;
+    ctx.fillStyle="#fff";
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+/* ================= CREATE ================= */
+const particles=[];
+for(let i=0;i<2000;i++) particles.push(new Particle());
+
+const snow=[];
+for(let i=0;i<120;i++) snow.push(new Snow());
+
+/* ================= STAR ================= */
+function drawStar(){
+  ctx.save();
+  ctx.translate(TREE_X,TREE_Y-TREE_H-18);
+  ctx.rotate(treeRotation*1.2);
+  ctx.fillStyle="#ffd700";
+  ctx.shadowBlur=40;
+  ctx.shadowColor="#ffd700";
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    ctx.lineTo(Math.cos((18+i*72)/180*Math.PI)*20,
+               -Math.sin((18+i*72)/180*Math.PI)*20);
+    ctx.lineTo(Math.cos((54+i*72)/180*Math.PI)*8,
+               -Math.sin((54+i*72)/180*Math.PI)*8);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ================= LOOP ================= */
+let revealed=false;
+
+function animate(){
+  ctx.clearRect(0,0,W(),H());
+  treeRotation+=0.002;
+
+  particles.forEach(p=>{p.update();p.draw()});
+  drawStar();
+  snow.forEach(s=>{s.update();s.draw()});
+
+  // reveal text + image when tree done
+  if(!revealed && particles.every(p=>p.locked)){
+    revealed=true;
+    document.getElementById("memory").style.opacity=1;
+    document.getElementById("message").style.opacity=1;
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>
