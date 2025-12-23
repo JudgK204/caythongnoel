@@ -16,6 +16,40 @@ html,body{
   height:100%;
 }
 
+/* ===== START SCREEN ===== */
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at center,#111,#000);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+  color:#fff;
+  text-align:center;
+}
+
+#startScreen button{
+  padding:14px 36px;
+  font-size:18px;
+  border-radius:30px;
+  border:none;
+  cursor:pointer;
+  background:linear-gradient(135deg,#ffd700,#ffb400);
+  color:#000;
+  font-weight:600;
+  box-shadow:0 10px 30px rgba(255,215,0,.35);
+}
+
+#startScreen small{
+  margin-top:18px;
+  max-width:320px;
+  font-size:14px;
+  opacity:.75;
+  line-height:1.5;
+}
+
 /* ===== IMAGE BACK ===== */
 #memory{
   position:fixed;
@@ -58,64 +92,77 @@ canvas{
 
 <body>
 
+<div id="startScreen">
+  <button id="startBtn">START</button>
+
+  <small>
+    <strong>Ní hảo 👋</strong>, cô nương vui lòng bật chế độ<br>
+    <b>“Xem trang cho máy tính”</b> trên trình duyệt Chrome<br>
+    của điện thoại <u>trước khi</u> nhấn Start
+  </small>
+</div>
+
+
 <div id="memory"></div>
 
 <div id="message">
-  <h1>Merry Christmas, Bangbon ❤️</h1>
+  <h1>🎅🦌Merry Christmas, Bangbon!!! ❤️</h1>
 </div>
 
 <canvas id="c"></canvas>
 
 <script>
-/* ================= RESPONSIVE FIX ================= */
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
+/* ================= STATE ================= */
+let started=false;
+
+/* ================= RESPONSIVE ================= */
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
 
 function resize(){
-  const vw = visualViewport ? visualViewport.width : innerWidth;
-  const vh = visualViewport ? visualViewport.height : innerHeight;
-  canvas.width = vw;
-  canvas.height = vh;
+  const vw=visualViewport?visualViewport.width:innerWidth;
+  const vh=visualViewport?visualViewport.height:innerHeight;
+  canvas.width=vw;
+  canvas.height=vh;
 }
 resize();
-addEventListener("resize", resize);
-if (visualViewport) visualViewport.addEventListener("resize", resize);
+addEventListener("resize",resize);
+if(visualViewport) visualViewport.addEventListener("resize",resize);
 
-const W = () => canvas.width;
-const H = () => canvas.height;
+const W=()=>canvas.width;
+const H=()=>canvas.height;
 
 /* ================= TREE ================= */
-const TREE_H = Math.min(W(),H()) * 0.65;
-const TREE_W = TREE_H * 0.6;
-const TREE_X = W()/2;
-const TREE_Y = H()*0.88;
+const TREE_H=Math.min(W(),H())*0.65;
+const TREE_W=TREE_H*0.6;
+const TREE_X=W()/2;
+const TREE_Y=H()*0.88;
 
-const COLORS = ["#ffd27d","#ffcc33","#ffb347","#ffe066"];
-let treeRotation = 0;
+const COLORS=["#ffd27d","#ffcc33","#ffb347","#ffe066"];
+let treeRotation=0;
 
 /* ================= PARTICLE ================= */
 class Particle{
   constructor(){
-    this.t = Math.random();
-    this.radiusTarget = (TREE_W/2)*this.t;
-    this.yTarget = (TREE_Y-TREE_H)+this.t*TREE_H;
-    this.angleOffset = Math.random()*Math.PI*2;
+    this.t=Math.random();
+    this.radiusTarget=(TREE_W/2)*this.t;
+    this.yTarget=(TREE_Y-TREE_H)+this.t*TREE_H;
+    this.angleOffset=Math.random()*Math.PI*2;
 
-    this.radius = Math.max(W(),H())*0.9 + Math.random()*300;
-    this.angle = Math.random()*Math.PI*2;
-    this.y = H()+Math.random()*400;
+    this.radius=Math.max(W(),H())*0.9+Math.random()*300;
+    this.angle=Math.random()*Math.PI*2;
+    this.y=H()+Math.random()*400;
 
     this.locked=false;
     this.a=0;
     this.r=Math.random()*1.8+0.6;
     this.c=COLORS[Math.random()*COLORS.length|0];
   }
-
   update(){
     if(!this.locked){
-      this.radius += (this.radiusTarget-this.radius)*0.015;
-      this.angle += 0.02;
-      this.y += (this.yTarget-this.y)*0.02;
+      this.radius+=(this.radiusTarget-this.radius)*0.015;
+      this.angle+=0.02;
+      this.y+=(this.yTarget-this.y)*0.02;
       if(Math.abs(this.radius-this.radiusTarget)<1.2 &&
          Math.abs(this.y-this.yTarget)<1.2){
         this.locked=true;
@@ -123,12 +170,10 @@ class Particle{
     }
     this.a=Math.min(this.a+0.02,1);
   }
-
   draw(){
     const ang=this.angle+this.angleOffset+treeRotation;
     const x=TREE_X+Math.cos(ang)*this.radius;
     const y=this.locked?this.yTarget:this.y;
-
     ctx.globalAlpha=this.a;
     ctx.fillStyle=this.c;
     ctx.shadowBlur=22;
@@ -140,13 +185,13 @@ class Particle{
   }
 }
 
-/* ================= SNOW (TO HƠN) ================= */
+/* ================= SNOW ================= */
 class Snow{
   constructor(){this.reset()}
   reset(){
     this.x=Math.random()*W();
     this.y=Math.random()*-H();
-    this.r=Math.random()*2.6+1.6;   // ❄️ TO HƠN
+    this.r=Math.random()*2.6+1.6;
     this.vy=Math.random()*0.6+0.4;
     this.vx=Math.random()*0.3-0.15;
     this.a=Math.random()*0.8+0.4;
@@ -169,28 +214,26 @@ class Snow{
 /* ================= GIFTS ================= */
 class Gift{
   constructor(){
-    this.w = Math.random()*36+24;
-    this.h = this.w*0.75;
-    this.x = TREE_X + (Math.random()-0.5)*TREE_W*0.9;
-    this.y = TREE_Y - this.h/2 - Math.random()*20;
-    this.rot = Math.random()*0.5 - 0.25;
-    this.c1 = `hsl(${Math.random()*360},80%,60%)`;
-    this.c2 = "#fff";
-    this.a = 0;
+    this.w=Math.random()*36+24;
+    this.h=this.w*0.75;
+    this.x=TREE_X+(Math.random()-0.5)*TREE_W*0.9;
+    this.y=TREE_Y-this.h/2-Math.random()*20;
+    this.rot=Math.random()*0.5-0.25;
+    this.c1=`hsl(${Math.random()*360},80%,60%)`;
+    this.c2="#fff";
+    this.a=0;
   }
-  update(){ this.a=Math.min(this.a+0.02,1); }
+  update(){this.a=Math.min(this.a+0.02,1)}
   draw(){
     ctx.save();
     ctx.translate(this.x,this.y);
     ctx.rotate(this.rot);
     ctx.globalAlpha=this.a;
-
     ctx.fillStyle=this.c1;
     ctx.fillRect(-this.w/2,-this.h/2,this.w,this.h);
     ctx.fillStyle=this.c2;
     ctx.fillRect(-3,-this.h/2,6,this.h);
     ctx.fillRect(-this.w/2,-3,this.w,6);
-
     ctx.restore();
     ctx.globalAlpha=1;
   }
@@ -223,8 +266,8 @@ function drawStar(){
 
 /* ================= LOOP ================= */
 let revealed=false;
-
 function animate(){
+  if(!started) return;
   ctx.clearRect(0,0,W(),H());
   treeRotation+=0.002;
 
@@ -237,12 +280,16 @@ function animate(){
     memory.style.opacity=1;
     message.style.opacity=1;
   }
-
   if(revealed) gifts.forEach(g=>{g.update();g.draw()});
-
   requestAnimationFrame(animate);
 }
-animate();
+
+/* ================= START BTN ================= */
+startBtn.onclick=()=>{
+  started=true;
+  startScreen.style.display="none";
+  animate();
+};
 </script>
 
 </body>
